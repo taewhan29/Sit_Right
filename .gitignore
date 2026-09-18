@@ -1,0 +1,18 @@
+# Python 가상환경
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# 로깅 데이터 (팀원 개인 자세 데이터는 커밋 금지)
+*.csv
+*.db
+*.sqlite3
+logs/
+
+# IDE 설정
+.vscode/
+.idea/
+
+# 환경 변수 (추후 Supabase 키 등)
+.env
