@@ -1,3 +1,4 @@
-opencv-python>=4.8.0
-mediapipe>=0.10.0
-numpy>=1.24.0
+# Python 3.10.x 기준
+mediapipe==0.10.21
+numpy==1.26.4
+opencv-contrib-python==4.11.0.86

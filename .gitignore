@@ -1,5 +1,5 @@
 # Python 가상환경
-venv/
+capstone_env/
 .venv/
 __pycache__/
 *.pyc

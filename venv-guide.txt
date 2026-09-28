@@ -1,0 +1,15 @@
+# 0. (최초 1회) 스크립트 실행 오류 방지 설정 (PowerShell 기준)
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+
+# 1. 가상환경 생성
+py -m venv capstone_env
+
+# 2. 가상환경 실행
+.\capstone_env\Scripts\Activate.ps1
+
+# 3. 가상환경 실행 후 pip 업그레이드 및 라이브러리 설치
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. 가상환경 종료
+deactivate
