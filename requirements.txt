@@ -1,4 +1,16 @@
 # Python 3.10.x 기준
+
+# Vision & Client
 mediapipe==0.10.21
 numpy==1.26.4
 opencv-contrib-python==4.11.0.86
+requests==2.32.3
+
+# Backend & Server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+
+# Database & Utils
+supabase==2.11.0
+python-dotenv==1.0.1

@@ -1,8 +1,14 @@
-# 0. (최초 1회) 스크립트 실행 오류 방지 설정 (PowerShell 기준)
+# Python 3.10.x version install
+# cmd
+winget install -e --id Python.Python.3.10
+# version check
+py -3.10 --version
+
+# 0. (Vscode terminal, PowerShell 사용 시 입력) 스크립트 실행 오류 방지 설정
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 # 1. 가상환경 생성
-py -m venv capstone_env
+py -3.10 -m venv capstone_env
 
 # 2. 가상환경 실행
 .\capstone_env\Scripts\Activate.ps1
