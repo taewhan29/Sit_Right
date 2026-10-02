@@ -16,3 +16,8 @@ logs/
 
 # 환경 변수 (추후 Supabase 키 등)
 .env
+
+# exe 파일
+build/
+dist/
+*.spec
