@@ -1,0 +1,18 @@
+# process_and_draw 함수 내부 코드
+
+# 좌표 신뢰도
+extracted_coords[p] = {
+    "x": smoothed_x, 
+    "y": smoothed_y,
+    "z": smoothed_z,            
+    "visibility": pt.visibility
+}
+
+# 픽셀 좌표
+extracted_coords[p] = {
+    "x": smoothed_x, 
+    "y": smoothed_y,
+    "z": smoothed_z,             
+    "px": int(smoothed_x * w),   # 화면 가로 픽셀 적용
+    "py": int(smoothed_y * h)    # 화면 세로 픽셀 적용
+}
