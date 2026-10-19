@@ -1,36 +1,26 @@
-""" 종료 : q """
-# 원본 프레임으로 추론, 화면 출력만 거울모드
-
+"""Q: 종료 / C: 기준 재측정. 원본으로 추론하고 표시만 거울 모드."""
 import time
 import cv2
-import mediapipe as mp
 from core.posture_judge.connection import WebcamConnection
 
-PROCESS_EVERY_N = 1  # 2~3으로 올리면 프레임 스킵 (연산량 감소)
+PROCESS_EVERY_N = 1
 INPUT_WIDTH = 480
-
-mp_pose = mp.solutions.pose
-mp_draw = mp.solutions.drawing_utils
-PL = mp_pose.PoseLandmark
-KEY_POINTS = [PL.NOSE, PL.LEFT_EAR, PL.RIGHT_EAR, PL.LEFT_SHOULDER, PL.RIGHT_SHOULDER]
+WINDOW = "webcam test (q: quit)"
 
 
 def main():
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     if not cap.isOpened():
+        cap.release()
         print("웹캠을 열 수 없습니다. 다른 프로그램이 쓰고 있는지 확인하세요.")
         return
 
-    pose = connection = None
+    connection = None
     try:
-        pose = mp_pose.Pose(
-            model_complexity=0,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5,
-        )
+        # This object creates exactly one RealTimePoseDetector from pose/ddd.
         connection = WebcamConnection()
-        last_result, frame_idx, prev, fps = None, 0, time.time(), 0.0
-
+        last_coords, seen = None, 0
+        frame_idx, prev, fps = 0, time.monotonic(), 0.0
         while True:
             ok, frame = cap.read()
             if not ok:
@@ -40,45 +30,31 @@ def main():
             fresh = frame_idx % PROCESS_EVERY_N == 0
             if fresh:
                 h, w = frame.shape[:2]
-                small = cv2.resize(frame, (INPUT_WIDTH, int(h * INPUT_WIDTH / w)))
-                last_result = pose.process(cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
+                small = cv2.resize(frame, (INPUT_WIDTH, max(1, int(h * INPUT_WIDTH / w))))
+                last_coords, seen = connection.infer(frame, small)
             frame_idx += 1
 
-            status = "NO POSE"
-            if last_result and last_result.pose_landmarks:
-                lm = last_result.pose_landmarks
-                mp_draw.draw_landmarks(frame, lm, mp_pose.POSE_CONNECTIONS)
-                h, w = frame.shape[:2]
-                for p in KEY_POINTS:
-                    pt = lm.landmark[p]
-                    if pt.visibility > 0.5:
-                        cv2.circle(frame, (int(pt.x * w), int(pt.y * h)), 7, (0, 255, 255), -1)
-                seen = sum(lm.landmark[p].visibility > 0.5 for p in KEY_POINTS)
-                status = f"key points {seen}/{len(KEY_POINTS)}"
-
-            now = time.time()
-            fps = 0.9 * fps + 0.1 * (1 / max(now - prev, 1e-6))
+            now = time.monotonic()
+            fps = 0.9 * fps + 0.1 / max(now - prev, 1e-6)
             prev = now
-
-            frame = connection.update(frame, last_result, fresh=fresh)  # 표시용 반전도 연결부에서 처리
+            frame = connection.update(frame, last_coords, fresh=fresh)
+            status = f"key points {seen}/5" if last_coords else "NO POSE"
             cv2.putText(frame, f"FPS {fps:.1f} | {status}", (10, frame.shape[0] - 15),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            cv2.imshow("webcam test (q: quit)", frame)
+            cv2.imshow(WINDOW, frame)
             key = cv2.waitKey(1) & 0xFF
-            connection.handle_key(key)
-            if key == ord("q"):
+            if key in (ord("q"), ord("Q")):
                 break
-
+            connection.handle_key(key)
+            if cv2.getWindowProperty(WINDOW, cv2.WND_PROP_VISIBLE) < 1:
+                break
     finally:
         try:
             if connection is not None:
                 connection.close()
         finally:
             cap.release()
-            if pose is not None:
-                pose.close()
             cv2.destroyAllWindows()
-
 
 
 if __name__ == "__main__":
