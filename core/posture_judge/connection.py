@@ -69,19 +69,12 @@ class WebcamConnection:
         view = cv2.flip(frame, 1)
         # Inference already ran through self.infer; never run it again here.
         pose = None
-<<<<<<< HEAD
         if fresh and pose_result is not None:
-            if isinstance(pose_result, dict):
-                pose = self.to_pose(pose_result, frame.shape[1], frame.shape[0])
-            else:
-=======
-        if fresh:
             if isinstance(pose_result, Mapping):
                 raw = pose_result
                 pose = self.to_pose(raw, frame.shape[1], frame.shape[0])
             else:
                 # Accept old MediaPipe results for compatibility with existing callers.
->>>>>>> 8d6c31f0af0682a2bccbc5d2a8c2255d41fccf34
                 landmarks = getattr(pose_result, 'pose_landmarks', None)
                 if landmarks is not None:
                     raw = {index: point for index, point in enumerate(landmarks.landmark)}
