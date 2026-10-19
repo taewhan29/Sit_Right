@@ -7,10 +7,11 @@ import argparse
 from importlib import import_module
 from pathlib import Path
 import time
+from collections.abc import Mapping
 
 
 class WebcamConnection:
-    """Attach calibration/warnings to an existing camera loop without new inference.
+    """Own the teammate Pose detector and connect calibration/warnings.
 
     update receives the existing MediaPipe result and unflipped BGR frame.
     It returns a mirrored display frame. Call fresh=False on skipped frames.
@@ -34,11 +35,31 @@ class WebcamConnection:
         self.calibrator = Calibrator(self.settings)
         self.painter = TextPainter()
         self.monitor = PostureMonitor(reference, self.settings)
+        try:
+            self.detector = create_detector()
+        except Exception:
+            self.monitor.close()
+            raise
         self.state = self.result = None
         self.closed = False
         if reference is None:
             self.calibrator.start()
         print('자세 경고 연결 완료: 60/120/240초. C: 기준 재측정, Q: 종료.', flush=True)
+        print('Pose 인식: core.pose.ddd.pose_detector.RealTimePoseDetector', flush=True)
+
+    def infer(self, frame, small_frame):
+        """Run only the team detector, drawing on the unflipped original frame."""
+        if self.closed:
+            raise RuntimeError('WebcamConnection is closed.')
+        coords, seen = self.detector.process_and_draw(frame, small_frame)
+        if not coords:
+            history = getattr(self.detector, 'previous_coords', None)
+            if history is not None:
+                history.clear()
+            return None, seen
+        # Use normalized coordinates so logic.to_pose owns scaling consistently.
+        return {key: {k: v for k, v in point.items() if k not in ('px', 'py')}
+                for key, point in coords.items()}, seen
 
     def update(self, frame, pose_result, *, fresh=True):
         import cv2
@@ -46,12 +67,21 @@ class WebcamConnection:
             raise RuntimeError('WebcamConnection is closed.')
         now = time.monotonic()
         view = cv2.flip(frame, 1)
-        # The existing webcam already did inference. Do not create another model.
+        # Inference already ran through self.infer; never run it again here.
         pose = None
+<<<<<<< HEAD
         if fresh and pose_result is not None:
             if isinstance(pose_result, dict):
                 pose = self.to_pose(pose_result, frame.shape[1], frame.shape[0])
             else:
+=======
+        if fresh:
+            if isinstance(pose_result, Mapping):
+                raw = pose_result
+                pose = self.to_pose(raw, frame.shape[1], frame.shape[0])
+            else:
+                # Accept old MediaPipe results for compatibility with existing callers.
+>>>>>>> 8d6c31f0af0682a2bccbc5d2a8c2255d41fccf34
                 landmarks = getattr(pose_result, 'pose_landmarks', None)
                 if landmarks is not None:
                     raw = {index: point for index, point in enumerate(landmarks.landmark)}
@@ -92,7 +122,10 @@ class WebcamConnection:
     def close(self):
         if not self.closed:
             self.closed = True
-            self.monitor.close()
+            try:
+                self.monitor.close()
+            finally:
+                self.detector.close()
 
 
 class PoseExtractor:
