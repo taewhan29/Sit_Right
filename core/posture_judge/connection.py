@@ -48,11 +48,14 @@ class WebcamConnection:
         view = cv2.flip(frame, 1)
         # The existing webcam already did inference. Do not create another model.
         pose = None
-        if fresh:
-            landmarks = getattr(pose_result, 'pose_landmarks', None)
-            if landmarks is not None:
-                raw = {index: point for index, point in enumerate(landmarks.landmark)}
-                pose = self.to_pose(raw, frame.shape[1], frame.shape[0])
+        if fresh and pose_result is not None:
+            if isinstance(pose_result, dict):
+                pose = self.to_pose(pose_result, frame.shape[1], frame.shape[0])
+            else:
+                landmarks = getattr(pose_result, 'pose_landmarks', None)
+                if landmarks is not None:
+                    raw = {index: point for index, point in enumerate(landmarks.landmark)}
+                    pose = self.to_pose(raw, frame.shape[1], frame.shape[0])
         if self.calibrator.active:
             if fresh:
                 self.state = self.calibrator.update(pose, now=now)
