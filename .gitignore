@@ -21,3 +21,4 @@ logs/
 build/
 dist/
 *.spec
+data/reference.json
