@@ -3,8 +3,12 @@
 Explicit construction creates windows; importing this module does not.
 Requires Windows and Pillow. No keyboard hooks, OS lock, or file writes.
 """
-import tkinter as tk
-from .desktop_blur import DesktopBlur
+try:
+    import tkinter as tk
+    from .desktop_blur import DesktopBlur
+except (ImportError, ModuleNotFoundError):
+    tk = None
+    DesktopBlur = None
 
 
 class WarningEffects:
@@ -15,6 +19,8 @@ class WarningEffects:
         self.popup = None
         self.camera_photo = None
         self.camera_item = None
+        if tk is None:
+            return
         try:
             if preview_only:
                 self.root = tk.Tk()
@@ -43,15 +49,11 @@ class WarningEffects:
         self.popup.protocol('WM_DELETE_WINDOW', self._close_popup)
 
     def update(self, result, frame=None):
-        """Use the same result returned by PostureController.update().
-
-        Level 2 freezes/blur-covers the desktop. Level 3 also shows correction
-        instructions until the controller reports five continuous good seconds.
-        frame is an optional uint8 HxWx3 BGR camera image (OpenCV format).
-        In level 3 it is shown live, even if the normal camera window is minimized.
-        The caller supplies frames; this module never opens a camera.
-        Emergency dismissal remains available; it does not reset warning time.
-        """
+        if self.root is None:
+            action = result.get('action')
+            if action:
+                print(f"[경고 효과 알림] {action}", flush=True)
+            return
         action = result.get('action')
         level = result['effect_level']
         if level != 1 or action in ('clear_warnings', 'suspend_warnings'):

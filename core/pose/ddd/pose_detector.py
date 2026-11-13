@@ -1,3 +1,7 @@
+import cv2
+import mediapipe as mp
+
+
 class RealTimePoseDetector:
     def __init__(self, min_detection_confidence=0.5, min_tracking_confidence=0.5, smoothing_factor=0.35):
         self.mp_pose = mp.solutions.pose
