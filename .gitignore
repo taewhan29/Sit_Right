@@ -10,6 +10,9 @@ __pycache__/
 *.sqlite3
 logs/
 
+# 개인 자세 데이터
+data/
+
 # IDE 설정
 .vscode/
 .idea/
@@ -21,4 +24,6 @@ logs/
 build/
 dist/
 *.spec
-data/reference.json
+
+# CLAUDE.md
+CLAUDE.md
