@@ -3,6 +3,7 @@
 실제 포즈 + 캘리브레이션 + 단계별 경고를 실행한다.
 경고 시간은 아래 MODE 로 정한다 ("real": 60/120/240초, "demo": 5/10/15초 시연용).
 실행 옵션 --real / --demo 를 주면 MODE 보다 우선한다.
+exe 로 실행할 때는 파일 이름에 demo / real 이 들어 있으면 그 모드를 쓴다.
 시작할 때마다 기준 자세를 새로 측정하고, 결과는 data/demo_reference.json 에만 저장한다.
 """
 import argparse
@@ -41,6 +42,19 @@ def reference_path() -> Path:
     return data / REFERENCE_NAME
 
 
+def default_mode() -> str:
+    """exe 는 파일 이름으로 모드를 정한다(Sit_Right_demo.exe / Sit_Right_real.exe).
+
+    같은 코드를 이름만 달리 두 번 빌드하므로 빌드 때마다 MODE 를 고쳐 쓸 필요가 없다."""
+    if getattr(sys, "frozen", False):
+        name = Path(sys.executable).stem.lower()
+        if "demo" in name:
+            return "demo"
+        if "real" in name:
+            return "real"
+    return MODE
+
+
 def show_error(message: str) -> None:
     print(message, file=sys.stderr, flush=True)
     try:
@@ -63,7 +77,7 @@ def cli():
     args = parser.parse_args()
 
     # 옵션을 주면 그 값이 우선이고, 없으면 위의 MODE 상수를 따른다
-    mode = "real" if args.real else "demo" if args.demo else MODE
+    mode = "real" if args.real else "demo" if args.demo else default_mode()
     argv = ["--demo"] if mode == "demo" else []
     argv += ["--recalibrate", "--reference", str(reference_path())]
     try:
